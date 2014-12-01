@@ -5,7 +5,6 @@ package com.acertainbookstore.business;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -13,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.acertainbookstore.interfaces.BookStore;
 import com.acertainbookstore.interfaces.StockManager;
@@ -29,7 +29,7 @@ public class ConcurrentCertainBookStore implements BookStore, StockManager {
 
 	public ConcurrentCertainBookStore() {
 		// Constructors are not synchronized
-		bookMap = new HashMap<Integer, BookStoreBook>();
+		bookMap = new ConcurrentHashMap<Integer, BookStoreBook>();
 	}
 
 	public void addBooks(Set<StockBook> bookSet)
