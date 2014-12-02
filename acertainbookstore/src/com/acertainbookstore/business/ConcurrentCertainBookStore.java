@@ -115,44 +115,40 @@ public class ConcurrentCertainBookStore implements BookStore, StockManager {
 				
 				isbns.add(ISBN);
 			}
+			BookStoreBook book;
+			
+			writeLockFromISBNs(isbns);
+					
+			// Update the number of copies
+			for (BookCopy bookCopy : bookCopiesSet) {
+				ISBN = bookCopy.getISBN();
+				numCopies = bookCopy.getNumCopies();
+				book = bookMap.get(ISBN);
+				book.addCopies(numCopies);
+			}
+			
+			writeUnlockFromISBNs(isbns);
 		}
 		finally{
 			bookMapMasterKey.readLock().unlock();
 		}
-		BookStoreBook book;
-		
-		writeLockFromISBNs(isbns);
-				
-		// Update the number of copies
-		for (BookCopy bookCopy : bookCopiesSet) {
-			ISBN = bookCopy.getISBN();
-			numCopies = bookCopy.getNumCopies();
-			book = bookMap.get(ISBN);
-			book.addCopies(numCopies);
-		}
-		
-		writeUnlockFromISBNs(isbns);
 		
 		return;
 	}
 
 	public List<StockBook> getBooks() {
 		bookMapMasterKey.readLock().lock();
-		try{
-			readLockAll();
+		readLockAll();
 		
-			List<StockBook> listBooks = new ArrayList<StockBook>();
-			Collection<BookStoreBook> bookMapValues = bookMap.values();
-			for (BookStoreBook book : bookMapValues) {
-				listBooks.add(book.immutableStockBook());
-			}
-		
-			readUnlockAll();
-			return listBooks;
-		} 
-		finally {
-				bookMapMasterKey.readLock().unlock(); 
+		List<StockBook> listBooks = new ArrayList<StockBook>();
+		Collection<BookStoreBook> bookMapValues = bookMap.values();
+		for (BookStoreBook book : bookMapValues) {
+			listBooks.add(book.immutableStockBook());
 		}
+		
+		readUnlockAll();
+		bookMapMasterKey.readLock().unlock(); 
+		return listBooks;
 	}
 
 	public void updateEditorPicks(Set<BookEditorPick> editorPicks)
@@ -188,11 +184,11 @@ public class ConcurrentCertainBookStore implements BookStore, StockManager {
 						editorPickArg.isEditorPick());
 			}
 			writeUnlockFromISBNs(isbns);
+			return;
 		}
 		finally {
 			bookMapMasterKey.readLock().unlock();
 		}
-		return;
 	}
 
 	public void buyBooks(Set<BookCopy> bookCopiesToBuy) throws BookStoreException {
@@ -361,7 +357,6 @@ public class ConcurrentCertainBookStore implements BookStore, StockManager {
 		readUnlockAll();
 		bookMapMasterKey.readLock().unlock();
 		return listEditorPicks;
-
 	}
 
 	@Override
@@ -402,13 +397,11 @@ public class ConcurrentCertainBookStore implements BookStore, StockManager {
 		try {
 			for (Integer ISBN : isbnSet) {
 				if (BookStoreUtility.isInvalidISBN(ISBN)){
-					bookMapMasterKey.readLock().unlock();
 					throw new BookStoreException(BookStoreConstants.ISBN + ISBN
 							+ BookStoreConstants.INVALID);
 					}
 				if (!bookMap.containsKey(ISBN)){
-					bookMapMasterKey.readLock().unlock();
-					throw new BookStoreException(BookStoreConstants.ISBN + ISBN
+						throw new BookStoreException(BookStoreConstants.ISBN + ISBN
 							+ BookStoreConstants.NOT_AVAILABLE);
 					}
 			}
