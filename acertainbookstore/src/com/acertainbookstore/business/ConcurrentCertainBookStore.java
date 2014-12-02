@@ -25,6 +25,10 @@ import com.acertainbookstore.utils.BookStoreUtility;
  * ConcurrentCertainBookStore implements the bookstore and its functionality which is
  * defined in the BookStore
  */
+/**
+ * @author kasper
+ *
+ */
 public class ConcurrentCertainBookStore implements BookStore, StockManager {
 	private Map<Integer, BookStoreBook> bookMap;
 	private final ReentrantReadWriteLock bookMapMasterKey = new ReentrantReadWriteLock();
@@ -380,31 +384,38 @@ public class ConcurrentCertainBookStore implements BookStore, StockManager {
 
 	public void removeAllBooks() throws BookStoreException {
 		bookMapMasterKey.writeLock().lock();
-		bookMap.clear();
-		bookMapBookKeys.clear();
-		bookMapMasterKey.writeLock().unlock();
+		try {
+			bookMap.clear();
+			bookMapBookKeys.clear();
+		}
+		finally {
+			bookMapMasterKey.writeLock().unlock();
+		}
 	}
 
-	public void removeBooks(Set<Integer> isbnSet)
-			throws BookStoreException {
+	public void removeBooks(Set<Integer> isbnSet) throws BookStoreException {
 
 		if (isbnSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
 		}
 		bookMapMasterKey.readLock().lock();
-		for (Integer ISBN : isbnSet) {
-			if (BookStoreUtility.isInvalidISBN(ISBN)){
-				bookMapMasterKey.readLock().unlock();
-				throw new BookStoreException(BookStoreConstants.ISBN + ISBN
-						+ BookStoreConstants.INVALID);
-				}
-			if (!bookMap.containsKey(ISBN)){
-				bookMapMasterKey.readLock().unlock();
-				throw new BookStoreException(BookStoreConstants.ISBN + ISBN
-						+ BookStoreConstants.NOT_AVAILABLE);
-				}
+		try {
+			for (Integer ISBN : isbnSet) {
+				if (BookStoreUtility.isInvalidISBN(ISBN)){
+					bookMapMasterKey.readLock().unlock();
+					throw new BookStoreException(BookStoreConstants.ISBN + ISBN
+							+ BookStoreConstants.INVALID);
+					}
+				if (!bookMap.containsKey(ISBN)){
+					bookMapMasterKey.readLock().unlock();
+					throw new BookStoreException(BookStoreConstants.ISBN + ISBN
+							+ BookStoreConstants.NOT_AVAILABLE);
+					}
+			}
 		}
-		bookMapMasterKey.readLock().unlock();
+		finally {
+			bookMapMasterKey.readLock().unlock();			
+		}
 		bookMapMasterKey.writeLock().lock();
 		for (int isbn : isbnSet) {
 			bookMap.remove(isbn);
