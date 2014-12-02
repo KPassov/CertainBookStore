@@ -16,8 +16,8 @@ import com.acertainbookstore.business.ConcurrentCertainBookStore;
 import com.acertainbookstore.business.ImmutableStockBook;
 import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.client.tests.threads.ActionMaker;
+import com.acertainbookstore.client.tests.threads.AddDeleter;
 import com.acertainbookstore.client.tests.threads.Buyer;
-import com.acertainbookstore.client.tests.threads.Inquisitor;
 import com.acertainbookstore.client.tests.threads.Stocker;
 import com.acertainbookstore.utils.BookStoreException;
 
@@ -58,13 +58,9 @@ public class ConcurrentBookStoreTest {
         				"mormor", 	       (float) 10, 2500, 0, 0, 0, false));
         return books;
 	}
-
-	
+		
 	@Test
 	public void testOne() throws InterruptedException, BookStoreException{
-//		Set<StockBook> bookss = new HashSet<StockBook>();
-//		bookss.add(new ImmutableStockBook(TEST_ISBN1, "Harry Potter and JUnit",
-//                "JK Unit", (float) 10, 1, 0, 0, 0, false));
 		Set<BookCopy> books = new HashSet<BookCopy>();
 	    books.add(new BookCopy(TEST_ISBN1, 4));
 	    books.add(new BookCopy(TEST_ISBN2, 3));
@@ -97,4 +93,46 @@ public class ConcurrentBookStoreTest {
 			assertTrue(store.getBooks().get(2).getNumCopies() == store.getBooks().get(3).getNumCopies());
 		}
 	}
+
+	// tests exclusive lock
+	@Test
+	public void testThree() throws BookStoreException{
+		Set<Integer> isbns = new HashSet<Integer>();
+		isbns.add(TEST_ISBN1);
+		isbns.add(TEST_ISBN2);
+		isbns.add(TEST_ISBN3);
+		isbns.add(TEST_ISBN4);
+		Set<StockBook> books = getDefaultBook();
+		threads.add(new AddDeleter(store, isbns, books, 500));
+		int listsize;
+		for(int i = 1000; i > 0; i--){
+			listsize = store.getBooks().size();
+			if(listsize != 0 && listsize !=4)
+				System.out.println("min listetissemand var ikke særlig stor den var kun " + listsize + "cm");
+				assertTrue(listsize == 0 || listsize == 4);			
+		}
+	}
+	
+	// testing for deadlock if this deadlocks, it wont return at all
+	@Test
+	public void testFour() throws InterruptedException{
+		BookCopy book1 = new BookCopy(TEST_ISBN1, 10);
+		BookCopy book2 = new BookCopy(TEST_ISBN2, 10);
+		BookCopy book3 = new BookCopy(TEST_ISBN3, 10);
+   		Set<BookCopy> set1 = new HashSet<BookCopy>(); 
+   		Set<BookCopy> set2 = new HashSet<BookCopy>(); 
+   		Set<BookCopy> set3 = new HashSet<BookCopy>(); 
+        set1.add(book1);
+        set1.add(book2);
+        set2.add(book2);
+        set2.add(book3);
+        set3.add(book3);
+        set3.add(book1);
+        threads.add(new ActionMaker(store, set1, 5000));
+        threads.add(new ActionMaker(store, set2, 5000));
+        Runnable current = new ActionMaker(store, set3, 5000, false);
+		current.run();
+	}
+	
+	
 }

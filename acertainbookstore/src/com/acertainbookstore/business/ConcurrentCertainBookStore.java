@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.acertainbookstore.interfaces.BookStore;
 import com.acertainbookstore.interfaces.StockManager;
@@ -25,16 +26,22 @@ import com.acertainbookstore.utils.BookStoreUtility;
  * defined in the BookStore
  */
 public class ConcurrentCertainBookStore implements BookStore, StockManager {
+	
+	// A HashMap that stores all books as a function of the ISBN
 	private Map<Integer, BookStoreBook> bookMap;
+	// A lock that can lock the entire list of books
+	ReentrantReadWriteLock masterLock;
+	// A lock for each ISBN
+	Map<Integer, ReentrantReadWriteLock> bookLocks;
 
 	public ConcurrentCertainBookStore() {
-		// Constructors are not synchronized
 		bookMap = new ConcurrentHashMap<Integer, BookStoreBook>();
+		bookLocks = new ConcurrentHashMap<Integer, ReentrantReadWriteLock>();
+		masterLock = new ReentrantReadWriteLock();
 	}
 
-	public void addBooks(Set<StockBook> bookSet)
-			throws BookStoreException {
-
+	public void addBooks(Set<StockBook> bookSet) throws BookStoreException {
+		masterLock.writeLock().lock();
 		if (bookSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
 		}
@@ -62,11 +69,11 @@ public class ConcurrentCertainBookStore implements BookStore, StockManager {
 			int ISBN = book.getISBN();
 			bookMap.put(ISBN, new BookStoreBook(book));
 		}
+		masterLock.writeLock().unlock();
 		return;
 	}
 
-	public void addCopies(Set<BookCopy> bookCopiesSet)
-			throws BookStoreException {
+	public void addCopies(Set<BookCopy> bookCopiesSet) throws BookStoreException {		
 		int ISBN, numCopies;
 
 		if (bookCopiesSet == null) {

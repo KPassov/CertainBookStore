@@ -16,6 +16,15 @@ public class ActionMaker implements Runnable{
 		
 	}
 	
+	public ActionMaker(ConcurrentCertainBookStore store, Set<BookCopy> books, int amount, boolean run){
+		this.store = store;
+		this.books = books;
+		this.amount = amount;
+		runner = new Thread(this);
+		if (run)
+			runner.start();
+	}
+	
 	public ActionMaker(ConcurrentCertainBookStore store, Set<BookCopy> books, int amount){
 		this.store = store;
 		this.books = books;
