@@ -108,9 +108,7 @@ public class ConcurrentBookStoreTest {
 		int listsize;
 		for(int i = 1000; i > 0; i--){
 			listsize = store.getBooks().size();
-			if(listsize != 0 && listsize !=4)
-				System.out.println("min listetissemand var ikke særlig stor den var kun " + listsize + "cm");
-				assertTrue(listsize == 0 || listsize == 4);			
+			assertTrue(listsize == 0 || listsize == 4);			
 		}
 	}
 	
