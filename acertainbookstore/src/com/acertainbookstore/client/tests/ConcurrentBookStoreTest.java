@@ -70,6 +70,7 @@ public class ConcurrentBookStoreTest {
 		threads.add(new Buyer(store, books, 500));
 		
 		Thread.sleep(1000);
+		
 		for(StockBook book : store.getBooks()){
 			if(book.getNumCopies() != 2500){
 				System.out.println(book.getTitle() + " failed test 1 with " + book.getNumCopies() + " books");
@@ -80,17 +81,17 @@ public class ConcurrentBookStoreTest {
 	
 	@Test
 	public void testTwo(){
-		Set<BookCopy> books = new HashSet<BookCopy>();
-		books.add(new BookCopy(TEST_ISBN1, 3));
-		books.add(new BookCopy(TEST_ISBN2, 3));
-		books.add(new BookCopy(TEST_ISBN3, 3));
-		books.add(new BookCopy(TEST_ISBN4, 3));
-		threads.add(new ActionMaker(store, books, 500));
+		Set<BookCopy> buyBooks = new HashSet<BookCopy>();
+		buyBooks.add(new BookCopy(TEST_ISBN1, 3));
+		buyBooks.add(new BookCopy(TEST_ISBN2, 3));
+		buyBooks.add(new BookCopy(TEST_ISBN3, 3));
+		buyBooks.add(new BookCopy(TEST_ISBN4, 3));
+		threads.add(new ActionMaker(store, buyBooks, 500));
 		for(int i = 1000; i > 0; i--){
-			System.out.println("Itteration " + i);
-			assertTrue(store.getBooks().get(0).getNumCopies() == store.getBooks().get(1).getNumCopies());
-			assertTrue(store.getBooks().get(1).getNumCopies() == store.getBooks().get(2).getNumCopies());
-			assertTrue(store.getBooks().get(2).getNumCopies() == store.getBooks().get(3).getNumCopies());
+			List<StockBook> books = store.getBooks();		
+			assertTrue(books.get(0).getNumCopies() == books.get(1).getNumCopies());
+			assertTrue(books.get(1).getNumCopies() == books.get(2).getNumCopies());
+			assertTrue(books.get(2).getNumCopies() == books.get(3).getNumCopies());
 		}
 	}
 
