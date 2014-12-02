@@ -41,7 +41,8 @@ public class ConcurrentCertainBookStore implements BookStore, StockManager {
 	}
 
 	public void addBooks(Set<StockBook> bookSet) throws BookStoreException {
-		masterLock.writeLock().lock();
+		masterLock.readLock().lock();
+		
 		if (bookSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
 		}
